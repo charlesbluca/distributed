@@ -18,6 +18,7 @@ dependencies:
   - ipykernel
   - ipywidgets
   - jinja2
+  - jupyter_client
   - locket >=1.0
   - lz4 >=0.23.1  # Only tested here
   - msgpack-python

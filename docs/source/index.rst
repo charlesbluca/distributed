@@ -110,6 +110,7 @@ Contents
 
    actors
    asynchronous
+   ipython
    http_services
    publish
    resources

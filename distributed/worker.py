@@ -422,6 +422,7 @@ class Worker(BaseWorker, ServerNode):
     stream_comms: dict[str, BatchedSend]
     heartbeat_interval: float
     heartbeat_active: bool
+    _ipython_kernel: Any | None = None
     services: dict[str, Any] = {}
     service_specs: dict[str, Any]
     metrics: dict[str, Callable[[Worker], Any]]
@@ -665,6 +666,7 @@ class Worker(BaseWorker, ServerNode):
         self.scheduler_delay = 0
         self.stream_comms = {}
         self.heartbeat_active = False
+        self._ipython_kernel = None
 
         if self.local_directory not in sys.path:
             sys.path.insert(0, self.local_directory)
@@ -698,6 +700,7 @@ class Worker(BaseWorker, ServerNode):
             "terminate": self.close,
             "ping": pingpong,
             "upload_file": self.upload_file,
+            "start_ipython": self.start_ipython,
             "call_stack": self.get_call_stack,
             "profile": self.get_profile,
             "profile_metadata": self.get_profile_metadata,
@@ -1216,6 +1219,18 @@ class Worker(BaseWorker, ServerNode):
             self.status,
         )
         await self.close()
+
+    def start_ipython(self, comm):
+        """Start an IPython kernel
+        Returns Jupyter connection info dictionary.
+        """
+        from distributed._ipython_utils import start_ipython
+
+        if self._ipython_kernel is None:
+            self._ipython_kernel = start_ipython(
+                ip=self.ip, ns={"worker": self}, log=logger
+            )
+        return self._ipython_kernel.get_connection_info()
 
     async def upload_file(
         self, filename: str, data: str | bytes, load: bool = True

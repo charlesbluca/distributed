@@ -3007,6 +3007,7 @@ class Scheduler(SchedulerState, ServerNode):
         # Communication state
         self.client_comms = {}
         self.stream_comms = {}
+        self._ipython_kernel = None
 
         # Task state
         tasks = {}
@@ -3112,6 +3113,7 @@ class Scheduler(SchedulerState, ServerNode):
             "add_keys": self.add_keys,
             "rebalance": self.rebalance,
             "replicate": self.replicate,
+            "start_ipython": self.start_ipython,
             "run_function": self.run_function,
             "restart": self.restart,
             "update_data": self.update_data,
@@ -6769,6 +6771,18 @@ class Scheduler(SchedulerState, ServerNode):
             else:
                 out.update({ww for ww in self.workers if w in ww})  # TODO: quadratic
         return list(out)
+
+    def start_ipython(self):
+        """Start an IPython kernel
+        Returns Jupyter connection info dictionary.
+        """
+        from distributed._ipython_utils import start_ipython
+
+        if self._ipython_kernel is None:
+            self._ipython_kernel = start_ipython(
+                ip=self.ip, ns={"scheduler": self}, log=logger
+            )
+        return self._ipython_kernel.get_connection_info()
 
     async def get_profile(
         self,
